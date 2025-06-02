@@ -29,10 +29,7 @@ let hash key (block: Domain.Block<'a>)  =
 
   hashFn.Clear()
 
-  let newHash = Convert.ToHexString computedHash 
-  let hashBytes = Encoding.UTF8.GetBytes newHash
-
-  { block with Hash = hashBytes.AsMemory() }
+  { block with Hash = Memory<_>.op_Implicit(computedHash.AsMemory ()) }
 
 let rando = Random(int32(DateTime.UtcNow.Ticks))
 let random64bitHex () =
@@ -40,6 +37,3 @@ let random64bitHex () =
   let theSpan = Span<byte>(buff, 64)
   rando.NextBytes(theSpan)
   readOnly theSpan
-
-
-

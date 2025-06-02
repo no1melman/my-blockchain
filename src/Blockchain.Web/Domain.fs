@@ -1,6 +1,7 @@
 module Domain
 
 open System
+open System.Text
 
 type Block<'T> = 
   {
@@ -11,6 +12,10 @@ type Block<'T> =
     PreviousHash: ReadOnlyMemory<byte>
     Nonce: ReadOnlyMemory<byte>
   }
+  member self.AsHex =
+    let newHash = Convert.ToHexString (self.Hash.ToArray ())
+    let hashBytes = Encoding.UTF8.GetBytes newHash
+    ReadOnlyMemory<_>.op_Implicit hashBytes
 
 type Payment =
   {

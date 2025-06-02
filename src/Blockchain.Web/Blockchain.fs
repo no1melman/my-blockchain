@@ -19,14 +19,14 @@ let hash (block: Block<'a>) =
   Hash.hash (Encoding.UTF8.GetBytes hashKey) block
 
 let newblock () =
-  let emptyHash : ReadOnlyMemory<byte> = Encoding.UTF8.GetBytes("")
+  let emptyHash = ReadOnlyMemory<_>.op_Implicit (Encoding.UTF8.GetBytes "" )
   let initial = {
     Index = List.length blocks |> (fun i -> int64(i + 1))
     Timestamp = DateTime.UtcNow
     Data = pendingTransactions
     Hash = emptyHash
-    PreviousHash = (List.tryLast blocks) |> Option.map (fun a -> a.Hash) |> Option.defaultValue emptyHash
-    Nonce =  Hash.random64bitHex().ToArray()
+    PreviousHash = (List.tryLast blocks) |> Option.map _.Hash |> Option.defaultValue emptyHash
+    Nonce = ReadOnlyMemory<_>.op_Implicit ( Hash.random64bitHex().ToArray () )
   }
 
   let hashedBlock = hash initial
@@ -36,12 +36,12 @@ let newblock () =
 let lastblock () =
   List.last blocks
 
-let validateSpan (part: ReadOnlySpan<byte>) =
+let validateSpan (plainHash: ReadOnlySpan<byte>) =
   let checkbuffer = NativePtr.stackalloc<byte> 4
   let checkSpan = Span<byte>(checkbuffer |> NativePtr.toVoidPtr, 4)
 
-  checkSpan.Fill(0uy)
-  part.SequenceEqual checkSpan
+  checkSpan.Fill 0uy 
+  plainHash.SequenceEqual checkSpan
 
 let validBlock (block: Block<'a>) =
   validateSpan(block.Hash.Slice(0,4).Span)

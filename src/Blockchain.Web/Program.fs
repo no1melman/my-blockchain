@@ -22,7 +22,7 @@ let main args =
     let initialBlock = Blockchain.init blockkey 
 
     app.MapGet("/", Func<string>(fun () -> 
-      initialBlock.Hash |> Utils.memToString
+      initialBlock.AsHex |> Utils.memToString
     )) |> ignore
 
     app.MapPost("/", Func<Domain.Payment, HttpContext, string>(fun payment ctx -> 
@@ -30,15 +30,14 @@ let main args =
 
       let block = Blockchain.proofOfWork ctx.RequestAborted
 
-      block.Hash |> Utils.memToString
+      block.AsHex |> Utils.memToString
     )) |> ignore
 
     app.MapGet("/random", Func<obj>(fun () -> 
       let checkit = Span<byte>([|0uy; 1uy; 0uy; 0uy|])
       {|
-         valid = Blockchain.validateSpan(checkit)
+         valid = Blockchain.validateSpan(Span<_>.op_Implicit checkit)
          hash = Hash.toHexString(Hash.random64bitHex())
-         
       |}
     )) |> ignore
 
