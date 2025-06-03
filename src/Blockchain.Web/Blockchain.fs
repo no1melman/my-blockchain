@@ -12,6 +12,9 @@ let mutable blocks: Block<Payment> list = []
 let mutable pendingTransactions: Payment list = []
 let mutable hashKey = ""
 
+[<Literal>]
+let TWO_BYTES = 2
+
 let addTransaction payment =
   pendingTransactions <- pendingTransactions @ [payment]
 
@@ -37,14 +40,14 @@ let lastblock () =
   List.last blocks
 
 let validateSpan (plainHash: ReadOnlySpan<byte>) =
-  let checkbuffer = NativePtr.stackalloc<byte> 4
-  let checkSpan = Span<byte>(checkbuffer |> NativePtr.toVoidPtr, 4)
+  let checkbuffer = NativePtr.stackalloc<byte> TWO_BYTES
+  let checkSpan = Span<byte>(checkbuffer |> NativePtr.toVoidPtr, TWO_BYTES)
 
   checkSpan.Fill 0uy 
   plainHash.SequenceEqual checkSpan
 
 let validBlock (block: Block<'a>) =
-  validateSpan(block.Hash.Slice(0,4).Span)
+  validateSpan(block.Hash.Slice(0, TWO_BYTES).Span)
 
 let proofOfWork (cancellationToken: CancellationToken) =
   let paraOpts = 
