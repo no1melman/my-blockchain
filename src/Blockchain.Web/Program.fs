@@ -14,34 +14,38 @@ let main args =
     let app = builder.Build()
 
     let getEnv () : Domain.Env =
-      {
-        LogInformation = (app.Services.GetService(typedefof<ILoggerFactory>) :?> ILoggerFactory).CreateLogger("application").LogInformation
-        GetConfig = fun s -> builder.Configuration.GetSection(s).Get<string>()
-      }
+        { LogInformation =
+            (app.Services.GetService(typedefof<ILoggerFactory>) :?> ILoggerFactory)
+                .CreateLogger("application")
+                .LogInformation
+          GetConfig = fun s -> builder.Configuration.GetSection(s).Get<string>() }
 
-    let initialBlock = Blockchain.init blockkey 
+    let initialBlock = Blockchain.init blockkey
 
-    app.MapGet("/", Func<string>(fun () -> 
-      initialBlock.AsHex |> Utils.memToString
-    )) |> ignore
+    app.MapGet("/", Func<string>(fun () -> Utils.spanToString initialBlock.AsHex))
+    |> ignore
 
-    app.MapPost("/", Func<Domain.Payment, HttpContext, string>(fun payment ctx -> 
-      Blockchain.addTransaction payment
+    app.MapPost(
+        "/",
+        Func<Domain.Payment, HttpContext, string>(fun payment ctx ->
+            Blockchain.addTransaction payment
 
-      let block = Blockchain.proofOfWork ctx.RequestAborted
+            let block = Blockchain.proofOfWork ctx.RequestAborted
 
-      block.AsHex |> Utils.memToString
-    )) |> ignore
+            Utils.spanToString block.AsHex)
+    )
+    |> ignore
 
-    app.MapGet("/random", Func<obj>(fun () -> 
-      let checkit = Span<byte>([|0uy; 1uy; 0uy; 0uy|])
-      {|
-         valid = Blockchain.validateSpan(Span<_>.op_Implicit checkit)
-         hash = Hash.toHexString(Hash.random64bitHex())
-      |}
-    )) |> ignore
+    app.MapGet(
+        "/random",
+        Func<obj>(fun () ->
+            let checkit = Span<byte>([| 0uy; 1uy; 0uy; 0uy |])
+
+            {| valid = Blockchain.validateSpan (Span<_>.op_Implicit checkit)
+               hash = Hash.toHexString (Hash.random64bitHex ()) |})
+    )
+    |> ignore
 
     app.Run()
 
     0 // Exit code
-
